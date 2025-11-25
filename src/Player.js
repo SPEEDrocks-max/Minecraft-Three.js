@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { Blocks } from './Blocks.js';
+import { Tool } from './Tool.js';
 
 export class Player {
     radius = 0.5;
@@ -12,11 +13,14 @@ export class Player {
     #worldvelocity = new THREE.Vector3();
     input = new THREE.Vector3();
     velocity = new THREE.Vector3();
-    Camera = new THREE.PerspectiveCamera(70 , window.innerWidth / window.innerHeight, 0.1, 200);
+    Camera = new THREE.PerspectiveCamera(70 , window.innerWidth / window.innerHeight, 0.01, 200);
     controls = new PointerLockControls(this.Camera , document.body);
     raycaster = new THREE.Raycaster(new THREE.Vector3() , new THREE.Vector3() , 0 , 3);
-    selectedCoords = Blocks.grass.id;
+    selectedCoords = null;
+    activeBlockID = Blocks.grass.id;
     CENTER_SCREEN = new THREE.Vector2();
+
+    tool = new Tool();
     /**
      * 
      * @param {THREE.Scene} scene 
@@ -25,6 +29,9 @@ export class Player {
     constructor(scene){
         this.Camera.position.set(32 ,16 , 32);
         scene.add(this.Camera)
+        this.tool.visible = true;
+        this.Camera.add(this.tool)
+        console.log('Tool added to camera:', this.tool);
         document.addEventListener('click' , () => {
             this.controls.lock();
         })
@@ -47,6 +54,7 @@ export class Player {
 
     update(world){
     this.updateRayCaster(world);
+    this.tool.update();
     }
 
     /**
@@ -60,6 +68,12 @@ export class Player {
 
         if (intersections.length > 0) {
             const intersection = intersections[0];
+            
+            // Skip non-instanced meshes (like water)
+            if (!intersection.object.isInstancedMesh) {
+                return;
+            }
+            
             const chunk = intersection.object.parent;
             
             // Get the instance matrix to find the exact block position
@@ -79,6 +93,11 @@ export class Player {
                 Math.round(blockPosition.y),
                 Math.round(blockPosition.z)
             );
+            
+            // If placing a block, offset by the intersection normal
+            if(this.activeBlockID != Blocks.empty.id){
+                this.selectedCoords.add(intersection.normal);
+            }
             
             this.selectionHelper.position.copy(this.selectedCoords);
             this.selectionHelper.visible = true;
@@ -127,6 +146,13 @@ export class Player {
         return this.Camera.position;
     }
 
+    onCameraLock() {
+    document.getElementById('overlay').style.visibility = 'hidden';
+  }
+    onCameraUnlock() {
+    document.getElementById('overlay').style.visibility = 'visible';
+  }
+
     /**
      * @param {KeyBoardEvent} event
      */
@@ -142,6 +168,12 @@ switch(event.code){
     case 'Digit3' : 
     case 'Digit4' :
     case 'Digit5' :
+    case 'Digit6' :
+    case 'Digit7' :
+    case 'Digit8' :
+    document.getElementById(`toolbar-${this.activeBlockID}`)?.classList.remove('selected');
+        document.getElementById(`toolbar-${event.key}`)?.classList.add('selected');
+
                this.activeBlockID = Number(event.key)
                break;
     case 'KeyW' : 
@@ -173,6 +205,7 @@ break;
 }
 
     }
+    
 
     /**
      * @param {KeyBoardEvent} event
@@ -200,6 +233,8 @@ break;
 }
     console.log("Key up")
     }
+
+    
     toString(){
         return `Player Position : ( ${this.position.x.toFixed(3)} , ${this.position.y.toFixed(3)} , ${this.position.z.toFixed(3)} )`
     }

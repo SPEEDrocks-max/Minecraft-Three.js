@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { WorldChunk } from './WorldChunk';
-
+import { DataStore } from './DataStore';
 export class World extends THREE.Group {
 
   drawdistance = 1;
@@ -8,30 +8,84 @@ export class World extends THREE.Group {
   
   ChunkSize = {
     width : 64 , 
-    height : 32
+    height : 48
   }
 
   params = {
     seed : 0 ,
     terrain : {
         scale : 30,
-        magnitude : 0.5 , 
-offset : 0.2
+        magnitude : 8, 
+offset : 6,
+waterOffset : 3
+
     } ,
-    threshold : 0.5
+    threshold : 0.5 ,
+    trees : {
+trunk : {
+  minHeight : 4 ,
+  maxHeight : 15,
+} , 
+canopy : {
+  minRadius : 5 ,
+  maxRadius : 10  ,
+  density : 0.50
+} , 
+frequency : 0.045
+    } , 
+    clouds : {
+      scale : 20 , 
+      density : 0.3,
+      height : 45
+    }
 }
 
+dataStore = new DataStore();
 
 constructor(seed = 0){
 super();
 this.seed = seed;
+
+document.addEventListener('keydown' , (event) => {    
+switch(event.code){
+  case 'F1' :
+    this.save();
+    break;
+
+    case 'F2' :
+    this.load();
+    break;
+}
+})
 }
 
-generate(){
+save(){
+localStorage.setItem('minecraft_params' , JSON.stringify(this.params));
+localStorage.setItem('minecraft_dataStore' , JSON.stringify(this.dataStore.data));
+document.title = 'Game Saved!';
+setTimeout( () => {
+    document.title = 'Minecraft'; 
+} , 2000);
+}
+
+load(){
+this.params = JSON.parse(localStorage.getItem('minecraft_params'))
+this.dataStore.data = JSON.parse(localStorage.getItem('minecraft_dataStore'))
+document.title = 'Game Loaded!';
+setTimeout( () => {
+    document.title = 'Minecraft';     
+} , 2000);
+this.generate();
+}
+
+generate(clearCache = true){
+  if(clearCache){
+  this.dataStore.clear();
+  }
   this.disposeChunks();
  for(let x = -1 ; x <= 1; x ++ ){
   for( let z = -1 ; z <= 1 ; z ++){
-    const chunk = new WorldChunk(this.ChunkSize , this.params);
+    const chunk = new WorldChunk(this.ChunkSize , this.params , this.dataStore);
     chunk.position.x = x * this.ChunkSize.width;
     chunk.position.y = 0;
     chunk.position.z = z * this.ChunkSize.width;
@@ -126,7 +180,7 @@ for(const chunk of chunkToRemove){
  */
 
 generateChunk(x , z){
-    const chunk = new WorldChunk(this.ChunkSize , this.params);
+    const chunk = new WorldChunk(this.ChunkSize , this.params , this.dataStore);
     chunk.position.x = x * this.ChunkSize.width;
     chunk.position.y = 0;
     chunk.position.z = z * this.ChunkSize.width;
@@ -228,6 +282,13 @@ const coords = this.worldToChunkBlock(x, y, z);
   if(chunk){
     chunk.addBlock(coords.block.x, coords.block.y, coords.block.z, blockID);
   }
+
+  this.hideBlock(x-1, y, z);
+      this.hideBlock(x+1, y, z);
+      this.hideBlock(x, y-1, z);  
+      this.hideBlock(x, y+1, z);
+      this.hideBlock(x, y, z-1);
+      this.hideBlock(x, y, z+1);
 }
 /**
  * @param {number} x
@@ -275,6 +336,20 @@ revealBlock(x , y , z){
   const chunk = this.getChunk(coords.chunk.x ,  coords.chunk.z);
   if(chunk){
     chunk.addBlockInstance(coords.block.x , coords.block.y , coords.block.z); 
+  }
+}
+
+/**
+ * @param {number} x
+ * @param {number} y  
+ * @param {number} z
+ */
+
+hideBlock(x , y , z){
+   const coords = this.worldToChunkBlock(x,y,z)
+  const chunk = this.getChunk(coords.chunk.x ,  coords.chunk.z);
+  if(chunk && chunk.isBlockObsecured(coords.block.x , coords.block.y , coords.block.z)){
+    chunk.deleteBlockInstance(coords.block.x , coords.block.y , coords.block.z); 
   }
 }
 }

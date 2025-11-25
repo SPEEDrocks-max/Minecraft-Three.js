@@ -1,6 +1,7 @@
 // block.js
 
 import * as THREE from 'three';
+import { materialAO } from 'three/tsl';
 
 const textureLoader = new THREE.TextureLoader();
 
@@ -24,11 +25,11 @@ const textures = {
     coalOre: loadtexture('/Textures/coal_ore.png'),
     IronOre: loadtexture('/Textures/iron_ore.png'),
     grassSide: loadtexture('/Textures/grass_path_side.jpg'),
-    leaves: loadtexture('/Textures/azalea_leaves.png'),
+    leaves: loadtexture('/Textures/leaves.png'),
     sand: loadtexture('/Textures/sand.png'),
     snow: loadtexture('/Textures/snow.png'),
-    treetop: loadtexture('/Textures/stripped_cherry_log_top.png'),
-    treeside: loadtexture('/Textures/stripped_cherry_log_side.png'),
+    treetop: loadtexture('/Textures/tree_top.png'),
+    treeside: loadtexture('/Textures/tree_side.png'),
 }
 
 export const Blocks = {
@@ -83,6 +84,39 @@ export const Blocks = {
         scarcity: 0.7,
         // FIX 1: This is now a SINGLE OBJECT, not an array
         material: new THREE.MeshStandardMaterial({ map: textures.IronOre }),
+    } ,
+
+    Tree : {
+       id : 6 , 
+       name : 'Tree' ,
+       material : [
+        new THREE.MeshLambertMaterial({ map: textures.treeside }),
+        new THREE.MeshLambertMaterial({ map: textures.treeside }),
+        new THREE.MeshLambertMaterial({ map: textures.treetop }),
+        new THREE.MeshLambertMaterial({ map: textures.treetop }),
+        new THREE.MeshLambertMaterial({ map: textures.treeside }),
+        new THREE.MeshLambertMaterial({ map: textures.treeside }),
+       ]
+    } , 
+    Leaves : {
+        id: 7 , 
+        name : 'Leaves' ,
+        material : new THREE.MeshLambertMaterial({map : textures.leaves})
+    } ,
+    Sand : {
+        id: 8 , 
+        name : 'Sand' ,
+        material : new THREE.MeshLambertMaterial({map : textures.sand})
+    } , 
+    cloud : {
+        id : 9 , 
+        name : 'Cloud' ,
+        material : new THREE.MeshLambertMaterial({
+            color : 0xE8E9E3,
+            transparent : true,
+            opacity : 0.8,
+            side: THREE.DoubleSide
+        })
     }
 }
 

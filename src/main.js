@@ -1,13 +1,24 @@
 import './style.css'
+
+// Hide overlay on first key press
+document.addEventListener('keydown', () => {
+  const overlay = document.getElementById('overlay');
+  if (overlay) {
+    overlay.style.display = 'none';
+  }
+}, { once: true });
+
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { WorldChunk } from './WorldChunk.js'
 import Stats from 'three/examples/jsm/libs/stats.module.js'
+//...'
 import { createUI } from './ui.js'
 import { Player } from './Player.js'
 import {Physics} from './Physics.js'
 import { World } from './World.js'
 import { Blocks } from './Blocks.js'
+import { ModelLoader } from './modelLoader.js'
 
 // import { createUI } from './ui.js'  // TODO: Add UI later
 const stats = new Stats()
@@ -22,7 +33,10 @@ renderer.setClearColor(0x62c1e5, 1) // Sky blue background
 const scene = new THREE.Scene()
 const physics = new Physics(scene);
 const player = new Player(scene);
-
+const modelloader = new ModelLoader();
+modelloader.loadModels( (models) => {
+   player.tool.setMesh(models.pickaxe)
+} )
 
 const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 )
 camera.position.set(-32 , 16 , -32)
@@ -77,12 +91,15 @@ if(player.controls.isLocked && player.selectedCoords ){
     world.removeBlock(
       player.selectedCoords.x , player.selectedCoords.y , player.selectedCoords.z
     )
+    player.tool.startAnimation();
 }
+
 else{
  world.addBlock(
       player.selectedCoords.x , player.selectedCoords.y , player.selectedCoords.z, player.activeBlockID
     )
 }
+
 }
 }
 document.addEventListener('mousedown' , onMouseDown)

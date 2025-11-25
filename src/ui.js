@@ -19,7 +19,7 @@ export function createUI(world , player) {
         world.clear()
         world.generate()
     }) 
-   gui.add(world, 'drawdistance', 1, 5, 1).name('Draw Distance').onChange( () => {
+   gui.add(world, 'drawdistance', 0, 10, 1).name('Draw Distance').onChange( () => {
         world.clear()
         world.generate()
    } )
@@ -37,6 +37,8 @@ export function createUI(world , player) {
         world.clear()
         world.generate()
    } )
+
+   
     TerrainFolder.open()
 
 const resourcesfolder = gui.addFolder('Resource Parameters')
@@ -103,7 +105,15 @@ resourcesfolder.add(Blocks.stone, 'scarcity', 0 ,1 ).name('Stone Scarcity').onCh
             )
     CoalFolder.open()
 
-  
+  const treefolder = gui.addFolder('Tree Parameters')
+  treefolder.add(world.params.trees, 'frequency', 0.01 ,0.5 ).name('Tree Frequency').onChange( () => {
+      world.clear()
+      world.generate()})
+
+      const cloudfolder = gui.addFolder('Cloud')
+      cloudfolder.add( world.params.clouds , 'density' , 0.0 , 1.0 ).name('Cloud Density').onChange( () => {
+      world.clear()
+      world.generate()})
 
 
 
